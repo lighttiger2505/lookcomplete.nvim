@@ -22,6 +22,10 @@ setl completeopt=menuone,noinsert,noselect
 inoremap <F5> <C-R>=ListMonths()<CR>
 
 func! s:get_source(kw)
+    if len(a:kw) == 0
+        return s:words
+    endif
+
     let l:words = []
     for l:word in s:words
         call Log(l:word)
