@@ -3,7 +3,7 @@
 " いきなり内容が挿入されたらいやじゃないですか？
 setl completeopt=menuone,noinsert,noselect
 inoremap <F5> <C-R>=ListMonths()<CR>
-func! ListMonths()
+func! ListMonths() abort
     " 途中入力している続きから入力されていしまいますね
     " Get start position
     let l:curpos = getcurpos()

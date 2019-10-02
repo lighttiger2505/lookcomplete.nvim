@@ -21,7 +21,7 @@ let s:words = [
 setl completeopt=menuone,noinsert,noselect
 inoremap <F5> <C-R>=ListMonths()<CR>
 
-func! s:get_source(kw)
+func! s:get_source(kw) abort
     if len(a:kw) == 0
         return s:words
     endif
@@ -37,7 +37,7 @@ func! s:get_source(kw)
     return l:words
 endfunc
 
-func! ListMonths()
+func! ListMonths() abort
     " 途中入力している続きから入力されていしまいますね
     " Get start position
     let l:curpos = getcurpos()
@@ -59,4 +59,3 @@ func! ListMonths()
 
     return ''
 endfunc
-
