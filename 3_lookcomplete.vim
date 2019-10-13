@@ -56,8 +56,6 @@ func! s:update_pum() abort
     if len(l:words) > 0
         call complete(l:startcol, l:words)
     endif
-
-    return ''
 endfunc
 
 func! s:get_source(kw) abort

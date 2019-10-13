@@ -34,7 +34,6 @@ function! s:on_text_changed_i() abort
 endfunction
 
 func! s:update_pum() abort
-    " Get start position
     let l:curpos = getcurpos()
     let l:lnum = l:curpos[1]
     let l:col = l:curpos[2]
@@ -46,13 +45,10 @@ func! s:update_pum() abort
     endif
     let l:startcol = l:col - l:kwlen
 
-    " Update pum
     let l:words = s:get_source(l:kw)
     if len(l:words) > 0
         call complete(l:startcol, l:words)
     endif
-
-    return ''
 endfunc
 
 func! s:get_source(kw) abort
