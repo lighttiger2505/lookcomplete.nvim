@@ -1,11 +1,13 @@
-" ポジション取得を追加して、それに応じて表示するようにした
+"=============================================================================
+" step 1: 補完オプションを使用して、補完の挙動を変更しよう
+"
+" - `completeopt`による補完動作の制御
+" - 入力済みの内容を考慮した補完候補の表示
+"=============================================================================
 
-" いきなり内容が挿入されたらいやじゃないですか？
 setl completeopt=menuone,noinsert,noselect
 inoremap <F5> <C-R>=ListMonths()<CR>
 func! ListMonths() abort
-    " 途中入力している続きから入力されていしまいますね
-    " Get start position
     let l:curpos = getcurpos()
     let l:lnum = l:curpos[1]
     let l:col = l:curpos[2]
@@ -17,7 +19,6 @@ func! ListMonths() abort
     endif
     let l:startcol = l:col - l:kwlen
 
-    " Update pum
     call complete(l:startcol, ['January', 'February', 'March',
     \ 'April', 'May', 'June', 'July', 'August', 'September',
     \ 'October', 'November', 'December'])

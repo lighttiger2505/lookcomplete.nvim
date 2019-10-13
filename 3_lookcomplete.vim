@@ -1,3 +1,12 @@
+"=============================================================================
+" step 3: 自動で補完しよう
+"
+" - 各イベントをフックして自動補完の動きを作成
+"   - InsertEnter: 入力開始時のカーソルポジション取得
+"   - InsertLeave: 入力終了時のカーソルポジションのリセット
+"   - TextChangeI: 編集中の自動補完候補の表示
+"=============================================================================
+
 function! Log(msg) abort
     let logfile = '/home/lighttiger2505/lookcomplete.log'
     call writefile([a:msg], logfile, 'a')
@@ -42,7 +51,6 @@ function! s:on_text_changed_i() abort
 endfunction
 
 func! s:update_pum() abort
-    " Get start position
     let l:curpos = getcurpos()
     let l:lnum = l:curpos[1]
     let l:col = l:curpos[2]

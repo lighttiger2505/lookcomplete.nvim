@@ -1,4 +1,9 @@
-" フィルタして指定の文字列だけを取得しよう
+"=============================================================================
+" step 2: 補完候補を途中入力のキーワードでフィルタリングしよう
+"
+" - 補完候補のフィルタリング
+"=============================================================================
+
 function! Log(msg) abort
     let logfile = '/home/lighttiger2505/lookcomplete.log'
     call writefile([a:msg], logfile, 'a')
@@ -38,8 +43,6 @@ func! s:get_source(kw) abort
 endfunc
 
 func! ListMonths() abort
-    " 途中入力している続きから入力されていしまいますね
-    " Get start position
     let l:curpos = getcurpos()
     let l:lnum = l:curpos[1]
     let l:col = l:curpos[2]
@@ -51,7 +54,6 @@ func! ListMonths() abort
     endif
     let l:startcol = l:col - l:kwlen
 
-    " Update pum
     let l:words = s:get_source(l:kw)
     if len(l:words) > 0
         call complete(l:startcol, l:words)
