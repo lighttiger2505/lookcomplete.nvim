@@ -12,20 +12,10 @@ function! Log(msg) abort
     call writefile([a:msg], logfile, 'a')
 endfunction
 
-let s:words = [
-            \ 'January',
-            \ 'February',
-            \ 'March',
-            \ 'April',
-            \ 'May',
-            \ 'June',
-            \ 'July',
-            \ 'August',
-            \ 'September',
-            \ 'October',
-            \ 'November',
-            \ 'December',
-            \]
+let s:words = ['January', 'February', 'March',
+    \ 'April', 'May', 'June', 'July', 'August', 'September',
+    \ 'October', 'November', 'December']
+
 setl completeopt=menuone,noinsert,noselect
 augroup autocomplete
     autocmd!
@@ -62,7 +52,6 @@ func! s:update_pum() abort
     endif
     let l:startcol = l:col - l:kwlen
 
-    " Update pum
     let l:words = s:get_source(l:kw)
     if len(l:words) > 0
         call complete(l:startcol, l:words)

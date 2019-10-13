@@ -9,20 +9,10 @@ function! Log(msg) abort
     call writefile([a:msg], logfile, 'a')
 endfunction
 
-let s:words = [
-            \ 'January',
-            \ 'February',
-            \ 'March',
-            \ 'April',
-            \ 'May',
-            \ 'June',
-            \ 'July',
-            \ 'August',
-            \ 'September',
-            \ 'October',
-            \ 'November',
-            \ 'December',
-            \]
+let s:words = ['January', 'February', 'March',
+    \ 'April', 'May', 'June', 'July', 'August', 'September',
+    \ 'October', 'November', 'December']
+
 setl completeopt=menuone,noinsert,noselect
 inoremap <F5> <C-R>=ListMonths()<CR>
 
