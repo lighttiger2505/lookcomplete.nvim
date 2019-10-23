@@ -1,7 +1,8 @@
 "=============================================================================
-" step 2: 補完候補を途中入力のキーワードでフィルタリングしよう
+" step 1: 補完オプションを使用して、補完の挙動を変更しよう
 "
-" - 補完候補のフィルタリング
+" - `completeopt`による補完動作の制御
+" - 入力済みの内容を考慮した補完候補の表示
 "=============================================================================
 
 nnoremap <Space>v :source ./lookcomplete.vim<CR>
@@ -11,11 +12,12 @@ function! s:log(...) abort
     call writefile([json_encode(a:000)], logfile, 'a')
 endfunction
 
-setl completeopt=noinsert,menuone,noselect
+" completeoptで補完ポップアップ表示時の動作を変更
+setl completeopt=menuone,noinsert,noselect
 
 inoremap <F5> <C-R>=ListMonths()<CR>
 
-func! ListMonths()
+func! ListMonths() abort
     let l:curpos = getcurpos()
     let l:lnum = l:curpos[1]
     let l:col = l:curpos[2]
@@ -30,26 +32,9 @@ func! ListMonths()
         return ''
     endif
 
-    let l:words = s:get_source(l:kw)
-
-    " 補完候補がないならば更新は不要
-    if len(l:words) > 0
-        call complete(l:startcol, l:words)
-    endif
-    return ''
-endfunc
-
-let s:words = ['January', 'February', 'March',
+    " 入力済み内容から補完開始位置を調整
+    call complete(l:startcol, ['January', 'February', 'March',
     \ 'April', 'May', 'June', 'July', 'August', 'September',
-    \ 'October', 'November', 'December']
-
-func! s:get_source(kw) abort
-    " 候補のフィルタリング
-    let l:words = []
-    for l:word in s:words
-        if len(matchstr(l:word, a:kw)) > 0
-            call add(l:words, l:word)
-        endif
-    endfor
-    return l:words
+    \ 'October', 'November', 'December'])
+    return ''
 endfunc

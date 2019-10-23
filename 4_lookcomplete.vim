@@ -1,7 +1,10 @@
 "=============================================================================
-" step 4: 英単語を補完しよう
+" step 3: 自動で補完しよう
 "
-" - 補完候補をコマンドから取得する
+" - 各イベントをフックして自動補完の動きを作成
+"   - InsertEnter: 入力開始時のカーソルポジション取得
+"   - InsertLeave: 入力終了時のカーソルポジションのリセット
+"   - TextChangeI: 編集中の自動補完候補の表示
 "=============================================================================
 
 nnoremap <Space>v :source ./lookcomplete.vim<CR>
@@ -11,8 +14,9 @@ function! s:log(...) abort
     call writefile([json_encode(a:000)], logfile, 'a')
 endfunction
 
-setl completeopt=noinsert,menuone,noselect
+setl completeopt=menuone,noinsert,noselect
 
+" テキスト変更イベントをフックして補完を実行
 augroup lookcomplete
     autocmd!
     autocmd TextChangedI * call s:text_change_i()
@@ -31,6 +35,7 @@ endfunction
 function! s:text_change_i() abort
     let l:prepos = s:prepos
     let s:prepos = getcurpos()
+    " 改行されているかチェック
     if s:prepos[1] ==# l:prepos[1]
         let l:curpos = getcurpos()
         let l:lnum = l:curpos[1]
@@ -57,8 +62,16 @@ func! s:update_pum(startcol, kw) abort
     endif
 endfunc
 
+let s:words = ['January', 'February', 'March',
+    \ 'April', 'May', 'June', 'July', 'August', 'September',
+    \ 'October', 'November', 'December']
+
 func! s:get_source(kw) abort
-    " lookコマンドで英単語を取得する
-    let l:cmd = 'look ' . a:kw
-    return split(system(l:cmd), '\n')
+    let l:words = []
+    for l:word in s:words
+        if len(matchstr(l:word, a:kw)) > 0
+            call add(l:words, l:word)
+        endif
+    endfor
+    return l:words
 endfunc
