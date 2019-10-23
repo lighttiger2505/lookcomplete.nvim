@@ -1,5 +1,5 @@
 "=============================================================================
-" step 1: 補完オプションを使用して、補完の挙動を変更しよう
+" step 2: 補完オプションを使用して、補完の挙動を変更しよう
 "
 " - `completeopt`による補完動作の制御
 " - 入力済みの内容を考慮した補完候補の表示
@@ -28,7 +28,7 @@ func! ListMonths() abort
 
     call s:log('get typed text', l:typed, l:kw, l:startcol)
 
-    if l:kwlen < 1
+    if l:kwlen == 0
         return ''
     endif
 

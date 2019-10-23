@@ -1,5 +1,5 @@
 "=============================================================================
-" step 3: 自動で補完しよう
+" step 4: 自動で補完しよう
 "
 " - 各イベントをフックして自動補完の動きを作成
 "   - InsertEnter: 入力開始時のカーソルポジション取得
@@ -47,9 +47,10 @@ function! s:text_change_i() abort
 
         call s:log('get typed text', l:typed, l:kw, l:startcol)
 
-        if l:kwlen < 1
+        if l:kwlen == 1
             return
         endif
+
         call s:update_pum(l:startcol, l:kw)
     endif
 endfunction

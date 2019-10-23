@@ -1,5 +1,5 @@
 "=============================================================================
-" step 4: 英単語を補完しよう
+" step 5: 英単語を補完しよう
 "
 " - 補完候補をコマンドから取得する
 "=============================================================================
@@ -42,7 +42,7 @@ function! s:text_change_i() abort
 
         call s:log('get typed text', l:typed, l:kw, l:startcol)
 
-        if l:kwlen < 1
+        if l:kwlen == 1
             return
         endif
         call s:update_pum(l:startcol, l:kw)
