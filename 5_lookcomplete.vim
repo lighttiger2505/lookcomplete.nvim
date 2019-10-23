@@ -4,72 +4,77 @@
 " - jobを用いてコマンドを実行する
 "=============================================================================
 
-function! Log(msg) abort
-    let logfile = '/home/lighttiger2505/lookcomplete.log'
-    call writefile([a:msg], logfile, 'a')
+nnoremap <Space>v :source ./lookcomplete.vim<CR>
+
+function! s:log(...) abort
+    let logfile = './lookcomplete.log'
+    call writefile([json_encode(a:000)], logfile, 'a')
 endfunction
 
-setl completeopt=menuone,noinsert,noselect
-augroup autocomplete
+setl completeopt=noinsert,menuone,noselect
+
+augroup lookcomplete
     autocmd!
-    autocmd InsertEnter  * call s:on_insert_enter()
-    autocmd InsertLeave  * call s:on_insert_leave()
-    autocmd TextChangedI * call s:on_text_changed_i()
+    autocmd TextChangedI * call s:text_change_i()
+    autocmd InsertEnter * call s:insert_enter()
+    autocmd InsertLeave * call s:insert_leave()
 augroup END
 
-function! s:on_insert_enter() abort
-    let s:previous_position = getcurpos()
+function! s:insert_enter() abort
+    let s:prepos = getcurpos()
 endfunction
 
-function! s:on_insert_leave() abort
-    unlet s:previous_position
+function! s:insert_leave() abort
+    unlet s:prepos
 endfunction
 
-function! s:on_text_changed_i() abort
-    let l:previous_position = s:previous_position
-    let s:previous_position = getcurpos()
-    if l:previous_position[1] ==# getcurpos()[1]
+function! s:text_change_i() abort
+    let l:prepos = s:prepos
+    let s:prepos = getcurpos()
+    if s:prepos[1] ==# l:prepos[1]
         let l:curpos = getcurpos()
         let l:lnum = l:curpos[1]
         let l:col = l:curpos[2]
         let l:typed = strpart(getline(l:lnum), 0, l:col-1)
         let l:kw = matchstr(l:typed, '\w\+$')
         let l:kwlen = len(l:kw)
-        if l:kwlen < 1
+        let l:startcol = l:col - l:kwlen
+
+        call s:log('get typed text', l:typed, l:kw, l:startcol)
+
+        if l:kwlen == 0
             return
         endif
-        let l:startcol = l:col - l:kwlen
-            call s:get_source(l:startcol, l:kw)
-        endif
+
+        call s:get_source(l:startcol, l:kw)
+    endif
 endfunction
 
-func! s:update_pum(start_col, words) abort
-    let l:words = a:words
-    if len(a:words) > 0
-        call complete(a:start_col, a:words)
-    endif
-    return ''
-endfunc
-
-func! s:get_source(start_col, kw) abort
+func! s:get_source(startcol, kw) abort
     let s:callbacks = {
     \ 'on_stdout': function('s:source_callback'),
     \ 'on_stderr': function('s:source_callback'),
     \ 'on_exit': function('s:source_callback'),
     \ }
-    let l:jobid = jobstart(['look', a:kw], extend({'start_col': a:start_col}, s:callbacks))
-    call Log('jobstart, id:' . l:jobid)
+    " ジョブで非同期にlookコマンドを実行
+    let l:jobid = jobstart(['look', a:kw], extend({'start_col': a:startcol}, s:callbacks))
+    call s:log('call look', l:jobid)
 endfunc
 
-function! s:source_callback(job_id, data, event) dict
-    if a:event == 'stdout'
-        call Log('callback stdout, ' . string(a:data))
+" startcolをコールバックに渡すためにdictで定義している
+function! s:source_callback(jobid, data, event) dict
+    if a:event ==# 'stdout'
+        " lookは末尾改行が入るので、ブランク文字のみの配列が返ってくるパターンがある
         if len(a:data) > 1
             call s:update_pum(self.start_col, a:data)
         endif
-    elseif a:event == 'stderr'
-        call Log('callback stdout')
-    else
-        call Log('callback exit')
     endif
 endfunction
+
+func! s:update_pum(startcol, words)
+    if len(a:words) == 1
+        return
+    endif
+
+    call complete(a:startcol, a:words)
+endfunc

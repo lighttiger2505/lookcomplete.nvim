@@ -4,84 +4,58 @@
 " - コンテキストにあったものだけを補完するチェック処理を追加する
 "=============================================================================
 
-function! Log(msg) abort
-    let logfile = '/home/lighttiger2505/lookcomplete.log'
-    call writefile([a:msg], logfile, 'a')
+nnoremap <Space>v :source ./lookcomplete.vim<CR>
+
+function! s:log(...) abort
+    let logfile = './lookcomplete.log'
+    call writefile([json_encode(a:000)], logfile, 'a')
 endfunction
 
-setl completeopt=menuone,noinsert,noselect
-augroup autocomplete
+setl completeopt=noinsert,menuone,noselect
+
+augroup lookcomplete
     autocmd!
-    autocmd InsertEnter  * call s:on_insert_enter()
-    autocmd InsertLeave  * call s:on_insert_leave()
-    autocmd TextChangedI * call s:on_text_changed_i()
+    autocmd TextChangedI * call s:text_change_i()
+    autocmd InsertEnter * call s:insert_enter()
+    autocmd InsertLeave * call s:insert_leave()
 augroup END
 
-function! s:on_insert_enter() abort
-    let s:previous_position = getcurpos()
+function! s:insert_enter() abort
+    let s:prepos = getcurpos()
 endfunction
 
-function! s:on_insert_leave() abort
-    unlet s:previous_position
+function! s:insert_leave() abort
+    unlet s:prepos
 endfunction
 
-function! s:on_text_changed_i() abort
-    let l:previous_position = s:previous_position
-    let s:previous_position = getcurpos()
-    if l:previous_position[1] ==# getcurpos()[1]
-        let l:curpos = getcurpos()
-        let l:lnum = l:curpos[1]
-        let l:col = l:curpos[2]
-        let l:typed = strpart(getline(l:lnum), 0, l:col-1)
-        let l:kw = matchstr(l:typed, '\w\+$')
-        let l:kwlen = len(l:kw)
-        if l:kwlen < 1
+function! s:text_change_i() abort
+    let l:prepos = s:prepos
+    let s:prepos = getcurpos()
+    if s:prepos[1] ==# l:prepos[1]
+        let l:ctx = s:get_context()
+
+        call s:log('get typed text', l:ctx)
+
+        if l:ctx['kwlen'] == 0
             return
         endif
-        let l:startcol = l:col - l:kwlen
-            let l:ctx = s:create_context()
-            if l:ctx['keywordlen'] < 1
-                return
-            endif
-            call s:get_source(l:ctx)
-        endif
+
+        call s:get_source(l:ctx)
+    endif
 endfunction
 
-function! s:create_context() abort
+" 冗長化を防ぐためにコンテキスト取得関数を用意
+function! s:get_context() abort
     let l:ret = {}
     let l:ret['curpos'] = getcurpos()
     let l:ret['lnum'] = l:ret['curpos'][1]
     let l:ret['col'] = l:ret['curpos'][2]
-    let l:ret['typed'] = strpart(getline(l:ret['lnum']),0,l:ret['col']-1)
-    let l:ret['keyword'] = matchstr(l:ret['typed'], '\w\+$')
-    let l:ret['keywordlen'] = len(l:ret['keyword'])
-    let l:ret['startcol'] = l:ret['col'] - l:ret['keywordlen']
+    let l:ret['typed'] = strpart(getline(l:ret['lnum']), 0, l:ret['col']-1)
+    let l:ret['kw'] = matchstr(l:ret['typed'], '\w\+$')
+    let l:ret['kwlen'] = len(l:ret['kw'])
+    let l:ret['startcol'] = l:ret['col'] - l:ret['kwlen']
     return l:ret
 endfunction
-
-
-func! s:update_pum(ctx, words) abort
-    let l:old_ctx = a:ctx
-    let l:now_ctx = s:create_context()
-
-    let l:words = a:words
-    let l:startcol = l:now_ctx['startcol']
-    let l:typed = l:now_ctx['typed']
-
-    if l:now_ctx['lnum'] ==# l:old_ctx['lnum']
-        \ && l:now_ctx['col'] ==# l:old_ctx['col']
-        \ && l:now_ctx['keyword'] ==# l:old_ctx['keyword']
-        let l:items = []
-        for l:item in l:words
-            let l:base = l:typed[l:startcol - 1:]
-            if stridx(l:item, l:base) == 0
-                call add(l:items, l:item)
-            endif
-        endfor
-        call Log('update_pum, typed:' . l:typed . ' items:' . string(l:items))
-        call complete(l:startcol, l:items)
-    endif
-endfunc
 
 func! s:get_source(ctx) abort
     let s:callbacks = {
@@ -89,19 +63,28 @@ func! s:get_source(ctx) abort
     \ 'on_stderr': function('s:source_callback'),
     \ 'on_exit': function('s:source_callback'),
     \ }
-    let l:jobid = jobstart(['look', a:ctx['keyword']], extend({'ctx': a:ctx}, s:callbacks))
-    call Log('jobstart, id:' . l:jobid)
+    let l:jobid = jobstart(['look', a:ctx['kw']], extend({'ctx': a:ctx}, s:callbacks))
+    call s:log('call look', l:jobid)
 endfunc
 
-function! s:source_callback(job_id, data, event) dict
-    if a:event == 'stdout'
-        call Log('callback stdout, ' . string(a:data))
+function! s:source_callback(jobid, data, event) dict
+    if a:event ==# 'stdout'
         if len(a:data) > 1
             call s:update_pum(self.ctx, a:data)
         endif
-    elseif a:event == 'stderr'
-        call Log('callback stdout')
-    else
-        call Log('callback exit')
     endif
 endfunction
+
+func! s:update_pum(ctx, words)
+    if len(a:words) == 1
+        return
+    endif
+
+    " コマンド実行と現状のコンテキストを比較
+    let l:ctx = s:get_context()
+    if l:ctx['lnum'] ==# a:ctx['lnum']
+        \ && l:ctx['col'] ==# a:ctx['col']
+        \ && l:ctx['kw'] ==# a:ctx['kw']
+        call complete(l:ctx['startcol'], a:words)
+    endif
+endfunc
