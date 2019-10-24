@@ -37,42 +37,26 @@ function! s:text_change_i() abort
     let s:prepos = getcurpos()
     " 改行されているかチェック
     if s:prepos[1] ==# l:prepos[1]
-        let l:curpos = getcurpos()
-        let l:lnum = l:curpos[1]
-        let l:col = l:curpos[2]
-        let l:typed = strpart(getline(l:lnum), 0, l:col-1)
-        let l:kw = matchstr(l:typed, '\w\+$')
-        let l:kwlen = len(l:kw)
-        let l:startcol = l:col - l:kwlen
-
-        call s:log('get typed text', l:typed, l:kw, l:startcol)
-
-        if l:kwlen == 1
-            return
-        endif
-
-        call s:update_pum(l:startcol, l:kw)
+        call s:update_pum()
     endif
 endfunction
 
-func! s:update_pum(startcol, kw) abort
-    let l:words = s:get_source(a:kw)
+func! s:update_pum() abort
+    let l:curpos = getcurpos()
+    let l:lnum = l:curpos[1]
+    let l:col = l:curpos[2]
+    let l:typed = strpart(getline(l:lnum), 0, l:col-1)
+    let l:kw = matchstr(l:typed, '\w\+$')
+    let l:kwlen = len(l:kw)
+    let l:startcol = l:col - l:kwlen
 
-    if len(l:words) > 0
-        call complete(a:startcol, l:words)
+    call s:log('get typed text', l:typed, l:kw, l:startcol)
+
+    if l:kwlen == 1
+        return
     endif
-endfunc
 
-let s:words = ['January', 'February', 'March',
-    \ 'April', 'May', 'June', 'July', 'August', 'September',
-    \ 'October', 'November', 'December']
-
-func! s:get_source(kw) abort
-    let l:words = []
-    for l:word in s:words
-        if len(matchstr(l:word, a:kw)) > 0
-            call add(l:words, l:word)
-        endif
-    endfor
-    return l:words
+    call complete(l:startcol, ['January', 'February', 'March',
+        \ 'April', 'May', 'June', 'July', 'August', 'September',
+        \ 'October', 'November', 'December'])
 endfunc
