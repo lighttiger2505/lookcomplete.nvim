@@ -1,7 +1,7 @@
 "=============================================================================
-" step 5: 英単語を補完しよう
+" step 6: 非同期で補完候補を取得しよう
 "
-" - 補完候補をコマンドから取得する
+" - jobを用いてコマンドを実行する
 "=============================================================================
 
 nnoremap <Space>v :source ./lookcomplete.vim<CR>
@@ -42,23 +42,39 @@ function! s:text_change_i() abort
 
         call s:log('get typed text', l:typed, l:kw, l:startcol)
 
-        if l:kwlen == 1
+        if l:kwlen == 0
             return
         endif
-        call s:update_pum(l:startcol, l:kw)
+
+        call s:get_source(l:startcol, l:kw)
     endif
 endfunction
 
-func! s:update_pum(startcol, kw) abort
-    let l:words = s:get_source(a:kw)
-
-    if len(l:words) > 0
-        call complete(a:startcol, l:words)
-    endif
+func! s:get_source(startcol, kw) abort
+    let s:callbacks = {
+    \ 'on_stdout': function('s:source_callback'),
+    \ 'on_stderr': function('s:source_callback'),
+    \ 'on_exit': function('s:source_callback'),
+    \ }
+    " ジョブで非同期にlookコマンドを実行
+    let l:jobid = jobstart(['look', a:kw], extend({'start_col': a:startcol}, s:callbacks))
+    call s:log('call look', l:jobid)
 endfunc
 
-func! s:get_source(kw) abort
-    " lookコマンドで英単語を取得する
-    let l:cmd = 'look ' . a:kw
-    return split(system(l:cmd), '\n')
+" startcolをコールバックに渡すためにdictで定義している
+function! s:source_callback(jobid, data, event) dict
+    if a:event ==# 'stdout'
+        " lookは末尾改行が入るので、ブランク文字のみの配列が返ってくるパターンがある
+        if len(a:data) > 1
+            call s:update_pum(self.start_col, a:data)
+        endif
+    endif
+endfunction
+
+func! s:update_pum(startcol, words)
+    if len(a:words) == 1
+        return
+    endif
+
+    call complete(a:startcol, a:words)
 endfunc
